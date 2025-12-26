@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConsult PWA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #007bff;
+            --primary-dark: #0056b3;
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-sec: #666666;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --danger: #dc3545;
+            --success: #28a745;
+            --warning: #ffc107;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-sec: #b0b0b0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { background-color: var(--bg-body); color: var(--text-main); transition: background 0.3s; padding-bottom: 80px; }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .theme-toggle, .login-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px; border-radius: 50%; cursor: pointer; }
+
+        /* Search Bar */
+        .search-container {
+            padding: 1rem;
+            position: sticky;
+            top: 60px;
+            z-index: 90;
+            background-color: var(--bg-body);
+            transition: background 0.3s;
+        }
+        
+        .search-box {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .search-box input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            margin-left: 10px;
+            font-size: 1rem;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Dashboard Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .category-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 140px;
+        }
+
+        .category-card:active { transform: scale(0.98); }
+        .category-card i { font-size: 2rem; color: var(--primary); margin-bottom: 10px; }
+        .category-card span { font-weight: 600; font-size: 0.9rem; }
+
+        /* List View */
+        .list-container { padding: 1rem; display: none; }
+        .back-btn { margin-bottom: 1rem; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 600; }
+        
+        .item-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+            position: relative;
+        }
+
+        .item-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .item-content { font-size: 0.95rem; line-height: 1.5; color: var(--text-sec); white-space: pre-line; }
+        .edit-controls { display: none; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; justify-content: flex-end; gap: 10px; }
+        
+        /* Modal & Forms */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+        }
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: var(--bg-body);
+            color: var(--text-main);
+        }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1001;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Floating Add Button (Admin Only) */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 99;
+        }
+
+        /* Responsive Utilities */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title"><i class="fas fa-stethoscope"></i> MediConsult</div>
+    <div style="display:flex; gap:10px;">
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+        <button class="login-btn" onclick="openLogin()"><i class="fas fa-user-lock"></i></button>
+    </div>
+</header>
+
+<div class="search-container">
+    <div class="search-box">
+        <i class="fas fa-search" style="color:var(--text-sec)"></i>
+        <input type="text" id="searchInput" placeholder="Buscar medicamento, dosis, código..." onkeyup="globalSearch()">
+    </div>
+</div>
+
+<div id="dashboard" class="grid-container">
+    </div>
+
+<div id="listView" class="list-container">
+    <div class="back-btn" onclick="showDashboard()"><i class="fas fa-arrow-left"></i> Volver</div>
+    <h2 id="categoryTitle" style="margin-bottom: 1rem;">Categoria</h2>
+    <div id="itemsContainer"></div>
+</div>
+
+<div class="fab" id="addFab" onclick="openEditModal()">
+    <i class="fas fa-plus"></i>
+</div>
+
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h3>Acceso Administrativo</h3>
+        <p style="font-size:0.8rem; color:var(--text-sec); margin-bottom:10px;">Introduce el código temporal.</p>
+        <input type="password" id="accessCode" placeholder="Código de acceso">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn btn-primary" onclick="login()">Entrar</button>
+            <button class="btn btn-danger" onclick="closeModal('loginModal')">Cancelar</button>
+        </div>
+        <div id="adminTools" class="hidden" style="margin-top:20px; border-top:1px solid #ccc; paddingTop:10px;">
+            <h4>Herramientas Súper Usuario</h4>
+            <button class="btn btn-primary" style="width:100%; margin-top:5px;" onclick="generateCode()">Generar Código Nuevo</button>
+            <div id="codeDisplay" style="margin-top:5px; font-family:monospace; font-weight:bold;"></div>
+            <button class="btn btn-danger" style="width:100%; margin-top:5px;" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Editar Información</h3>
+        <input type="hidden" id="editId">
+        <input type="hidden" id="editCategory">
+        <input type="text" id="editTitle" placeholder="Título (Ej. Nombre Medicamento)">
+        <textarea id="editContent" rows="6" placeholder="Detalles (Dosis, presentación, etc)"></textarea>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="saveItem()">Guardar</button>
+            <button class="btn btn-danger" onclick="closeModal('editModal')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Notificación</div>
+
+<script>
+    // --- DATA & STATE ---
+    const categories = [
+        { id: 'pediatria', name: 'Dosis Pediátricas', icon: 'fa-baby' },
+        { id: 'adultos', name: 'Dosis Adultos', icon: 'fa-user' },
+        { id: 'antibioticos', name: 'Dosis Antibióticos', icon: 'fa-capsules' },
+        { id: 'presentacion', name: 'Presentación Meds', icon: 'fa-pills' },
+        { id: 'embarazo', name: 'Med. Embarazo', icon: 'fa-person-pregnant' },
+        { id: 'compra', name: 'Pacientes Compra', icon: 'fa-file-invoice-dollar' },
+        { id: 'stock', name: 'Sectores Stock', icon: 'fa-boxes-stacked' },
+        { id: 'siglas', name: 'Siglas Cómputo', icon: 'fa-desktop' },
+        { id: 'legal', name: 'Resp. Legal', icon: 'fa-scale-balanced' },
+        { id: 'ancianos', name: 'Hogares Ancianos', icon: 'fa-house-user' },
+        { id: 'colores', name: 'Colores Operativos', icon: 'fa-palette' }
+    ];
+
+    // Initial Data based on your prompt
+    const initialData = [
+        { id: 1, cat: 'pediatria', title: 'Teofilina (Jarabe)', content: '• 1 año: 5–8 mg/kg/día\n• 1–5 años: 12–15 mg/kg/día\n• 5–15 años: 10–20 mg/kg/día\n• Frecuencia: cada 6 u 8 horas' },
+        { id: 2, cat: 'presentacion', title: 'Digoxina (Gotas)', content: '• 1 gota = 0,016 mg\n• 1 gota = 10,6 mcg\n• Frasco: 450 gotas' },
+        { id: 3, cat: 'adultos', title: 'Vareniclina (Champix)', content: '• Días 1–3: 1 tableta diaria\n• A partir día 4: 1 tableta mañana y noche\n• Duración: hasta completar tratamiento' },
+        { id: 4, cat: 'embarazo', title: 'Permitidos y No Rec.', content: '✔️ Permitidos:\n• Leche de magnesia\n• Fibra\n\n❌ No recomendados:\n• Petrolato' },
+        { id: 5, cat: 'antibioticos', title: 'Nitrofurantoína', content: '• 1 mes:\n• Tratamiento: 1.25–1.75 mg/kg c/6h\n• Profilaxis: 1–2 mg/kg dosis nocturna' },
+        { id: 6, cat: 'compra', title: 'Juanito del Valle - Isotretinoína', content: '• Cédula: XXXXXXXX\n• Dosis: 20 mg/día\n• Solicitud: Agosto\n• Inicio: Diciembre\n• Dr. Mata Lozano / Dr. Thorpe' },
+        { id: 7, cat: 'stock', title: 'Códigos EBAIS', content: '• 221101: Divino Pastor\n\nDerivar Inyectables:\n• 26 – Stock EBAIS Guadalupe Este' },
+        { id: 8, cat: 'siglas', title: 'EBAIS Divino Pastor', content: '• Código sector: 221101\n• Sigla en receta: 01' },
+        { id: 9, cat: 'legal', title: 'Ley 7739 – Código Niñez', content: 'Cubre:\n• Menores de edad\n• Mujeres embarazadas' },
+        { id: 10, cat: 'ancianos', title: 'Hogar: Ángeles de Oro', content: '• Entrega recetas: Miércoles\n• Retiro recetas: Viernes' },
+        { id: 11, cat: 'colores', title: 'Semanal', content: '• Lunes: Naranja\n• EBAIS: Celeste' }
+    ];
+
+    // Load from LocalStorage or Init
+    let db = JSON.parse(localStorage.getItem('mediconsult_db')) || initialData;
+    let currentUserRole = 'user'; // user, regente, admin
+    let currentCategory = null;
+
+    // --- RENDER FUNCTIONS ---
+    function renderDashboard() {
+        const grid = document.getElementById('dashboard');
+        grid.innerHTML = '';
+        categories.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            card.onclick = () => openCategory(c.id);
+            card.innerHTML = `<i class="fas ${c.icon}"></i><span>${c.name}</span>`;
+            grid.appendChild(card);
+        });
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('listView').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+    }
+
+    function openCategory(catId) {
+        currentCategory = catId;
+        const cat = categories.find(c => c.id === catId);
+        document.getElementById('categoryTitle').innerText = cat.name;
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('listView').style.display = 'block';
+        renderItems(db.filter(i => i.cat === catId));
+    }
+
+    function renderItems(items) {
+        const container = document.getElementById('itemsContainer');
+        container.innerHTML = '';
+        if(items.length === 0) container.innerHTML = '<p style="text-align:center; color:var(--text-sec)">No hay información.</p>';
+        
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            
+            let editBtns = '';
+            if(currentUserRole === 'admin' || currentUserRole === 'regente') {
+                editBtns = `
+                <div class="edit-controls" style="display:flex">
+                    <button class="btn btn-primary" style="padding:5px 10px; font-size:0.8rem" onclick="openEditModal(${item.id})"><i class="fas fa-edit"></i></button>
+                    ${currentUserRole === 'admin' ? `<button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>` : ''}
+                </div>`;
+            }
+
+            div.innerHTML = `
+                <div class="item-title">${item.title}</div>
+                <div class="item-content">${item.content}</div>
+                ${editBtns}
+            `;
+            container.appendChild(div);
+        });
+        
+        // Update Floating Button visibility
+        document.getElementById('addFab').style.display = (currentUserRole !== 'user' && currentCategory) ? 'flex' : 'none';
+    }
+
+    function showDashboard() {
+        currentCategory = null;
+        renderDashboard();
+    }
+
+    // --- SEARCH ---
+    function globalSearch() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        if(!query) {
+            if(currentCategory) openCategory(currentCategory);
+            else renderDashboard();
+            return;
+        }
+
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('listView').style.display = 'block';
+        document.getElementById('categoryTitle').innerText = "Resultados de búsqueda";
+        
+        const results = db.filter(item => 
+            item.title.toLowerCase().includes(query) || 
+            item.content.toLowerCase().includes(query) ||
+            categories.find(c=>c.id===item.cat)?.name.toLowerCase().includes(query)
+        );
+        renderItems(results);
+    }
+
+    // --- AUTHENTICATION & SECURITY (Simulated) ---
+    // En producción, esto debe validarse contra un servidor.
+    const SECRET_KEY_ADMIN = "MED_ADMIN_2025"; 
+    const SECRET_KEY_REGENTE = "MED_REG_2025";
+    
+    // Simula códigos temporales (Ej: Base64 de la fecha + rol)
+    function validateCode(code) {
+        // Códigos "Hardcoded" para demo
+        if(code === "1234") return 'admin';
+        if(code === "5678") return 'regente';
+        
+        // Lógica de código temporal encriptado (Simulada)
+        try {
+            const decoded = atob(code); // Decode base64
+            const [role, date] = decoded.split('|');
+            const today = new Date().toISOString().split('T')[0];
+            if (date === today) return role;
+        } catch(e) {}
+        
+        return null;
+    }
+
+    function login() {
+        const code = document.getElementById('accessCode').value;
+        const role = validateCode(code);
+        
+        if(role) {
+            currentUserRole = role;
+            showToast(`Bienvenido ${role.toUpperCase()}`);
+            closeModal('loginModal');
+            document.querySelector('.login-btn').style.color = varToHex('--success');
+            
+            // Refresh view to show edit buttons
+            if(currentCategory) openCategory(currentCategory);
+            
+            // If admin, show tools inside login modal next time
+            if(role === 'admin') {
+               // Enable admin tools logic
+            }
+        } else {
+            showToast("Código inválido o caducado");
+        }
+    }
+
+    function generateCode() {
+        // Genera código para HOY
+        const today = new Date().toISOString().split('T')[0];
+        const rawString = `regente|${today}`;
+        const token = btoa(rawString); // Simple Base64 encoding as "Encryption" demo
+        document.getElementById('codeDisplay').innerText = token;
+        showToast("Código temporal generado (Vence hoy)");
+    }
+
+    function logout() {
+        currentUserRole = 'user';
+        document.getElementById('adminTools').classList.add('hidden');
+        document.querySelector('.login-btn').style.color = 'white';
+        closeModal('loginModal');
+        showDashboard();
+        showToast("Sesión cerrada");
+    }
+
+    function openLogin() {
+        const modal = document.getElementById('loginModal');
+        modal.style.display = 'flex';
+        if(currentUserRole === 'admin') {
+            document.getElementById('adminTools').classList.remove('hidden');
+        } else {
+            document.getElementById('adminTools').classList.add('hidden');
+        }
+    }
+
+    // --- CRUD OPERATIONS ---
+    function openEditModal(id = null) {
+        document.getElementById('editModal').style.display = 'flex';
+        if(id) {
+            const item = db.find(i => i.id === id);
+            document.getElementById('editId').value = item.id;
+            document.getElementById('editTitle').value = item.title;
+            document.getElementById('editContent').value = item.content;
+            document.getElementById('editCategory').value = item.cat;
+            document.getElementById('modalTitle').innerText = "Editar";
+        } else {
+            document.getElementById('editId').value = '';
+            document.getElementById('editTitle').value = '';
+            document.getElementById('editContent').value = '';
+            document.getElementById('editCategory').value = currentCategory;
+            document.getElementById('modalTitle').innerText = "Nuevo Registro";
+        }
+    }
+
+    function saveItem() {
+        const id = document.getElementById('editId').value;
+        const title = document.getElementById('editTitle').value;
+        const content = document.getElementById('editContent').value;
+        const cat = document.getElementById('editCategory').value;
+
+        if(!title || !content) return showToast("Completa los campos");
+
+        if(id) {
+            // Edit
+            const index = db.findIndex(i => i.id == id);
+            db[index].title = title;
+            db[index].content = content;
+        } else {
+            // Create
+            const newId = Date.now();
+            db.push({ id: newId, cat: cat, title: title, content: content });
+        }
+
+        localStorage.setItem('mediconsult_db', JSON.stringify(db));
+        closeModal('editModal');
+        openCategory(cat);
+        showToast("Guardado correctamente");
+    }
+
+    function deleteItem(id) {
+        if(confirm("¿Eliminar este registro?")) {
+            db = db.filter(i => i.id !== id);
+            localStorage.setItem('mediconsult_db', JSON.stringify(db));
+            openCategory(currentCategory);
+            showToast("Eliminado");
+        }
+    }
+
+    // --- UTILS ---
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        if(body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            document.querySelector('.theme-toggle i').className = 'fas fa-moon';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            document.querySelector('.theme-toggle i').className = 'fas fa-sun';
+        }
+    }
+
+    function showToast(msg) {
+        const x = document.getElementById("toast");
+        x.innerText = msg;
+        x.style.visibility = "visible";
+        setTimeout(function(){ x.style.visibility = "hidden"; }, 3000);
+    }
+
+    function varToHex(v) {
+        return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    }
+
+    // Init
+    renderDashboard();
+
+</script>
+</body>
+</html>
